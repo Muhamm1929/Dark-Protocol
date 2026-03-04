@@ -9,14 +9,14 @@
 body {
   margin: 0;
   font-family: Inter, Arial, sans-serif;
-  background: radial-gradient(circle at top, #11192d, #05070d 55%);
+  background: radial-gradient(circle at 20% 10%, #1b2c4f 0%, #090d17 45%, #05070d 100%);
   color: #e8f1ff;
 }
 
 .page {
-  max-width: 1100px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 28px 20px 40px;
+  padding: 28px 20px 44px;
 }
 
 .center {
@@ -40,34 +40,27 @@ h1 {
 }
 
 .user {
-  color: #94b7e9;
+  color: #9fc2f2;
 }
 
 button {
-  background: linear-gradient(135deg, #1a2a46, #233f69);
-  border: 1px solid #3a6298;
+  background: linear-gradient(135deg, #1c2f4f, #2d4f81);
+  border: 1px solid #4a6ea3;
   color: #dff0ff;
   padding: 10px 14px;
   border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease;
 }
 
 button:hover {
-  border-color: #8ec2ff;
+  border-color: #9ec9ff;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(64, 130, 220, 0.3);
+  box-shadow: 0 10px 22px rgba(74, 133, 220, 0.32);
 }
 
 button:active {
   transform: scale(0.98);
-}
-
-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .levels {
@@ -76,11 +69,25 @@ button:disabled {
 }
 
 .card {
-  border: 1px solid #284775;
-  border-radius: 14px;
-  padding: 16px;
+  position: relative;
+  border: 1px solid #315588;
+  border-radius: 16px;
+  padding: 18px;
+  overflow: hidden;
+  background: rgba(8, 17, 31, 0.72);
   backdrop-filter: blur(8px);
-  background: rgba(8, 17, 31, 0.74);
+}
+
+.ambient::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  pointer-events: none;
+  background: radial-gradient(circle at 20% 10%, rgba(113, 189, 255, 0.2), transparent 45%),
+    radial-gradient(circle at 80% 90%, rgba(111, 255, 187, 0.12), transparent 50%);
+  opacity: 0.45;
+  animation: breathe 5.6s ease-in-out infinite;
 }
 
 .initCard {
@@ -88,36 +95,36 @@ button:disabled {
 }
 
 .card.green {
-  border-color: #1d7f56;
+  border-color: #2e9468;
 }
 
 .card.yellow {
-  border-color: #ac8731;
+  border-color: #b08e39;
 }
 
 .card.red {
-  border-color: #a34343;
-}
-
-.locked {
-  opacity: 0.6;
+  border-color: #ac4949;
 }
 
 h3 {
   margin: 0 0 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .terminal {
-  border-radius: 10px;
-  border: 1px solid #2d4f7e;
-  background: #02050c;
+  border-radius: 12px;
+  border: 1px solid #315588;
+  background: #02060e;
   padding: 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  position: relative;
+  z-index: 1;
 }
 
 .terminal p {
   margin: 0 0 10px;
-  color: #93b7eb;
+  color: #95bbee;
   white-space: pre-wrap;
 }
 
@@ -131,13 +138,15 @@ pre {
   margin-top: 12px;
   display: flex;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 input,
 textarea {
   width: 100%;
   background: #0a1222;
-  border: 1px solid #2d4f7e;
+  border: 1px solid #315588;
   color: #fff;
   padding: 10px;
   border-radius: 8px;
@@ -152,6 +161,8 @@ textarea {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  position: relative;
+  z-index: 1;
 }
 
 .admin {
@@ -159,19 +170,28 @@ textarea {
   gap: 16px;
 }
 
+.participantPanel {
+  position: relative;
+  z-index: 1;
+}
+
 .progress p {
   margin: 0 0 8px;
   color: #aac6eb;
+  position: relative;
+  z-index: 1;
 }
 
 .steps {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .steps span {
-  border: 1px solid #33557f;
+  border: 1px solid #3a5f8f;
   border-radius: 20px;
   padding: 6px 12px;
   color: #8faed8;
@@ -179,7 +199,8 @@ textarea {
 
 .steps span.active {
   border-color: #67b2ff;
-  color: #d8edff;
+  color: #e2f2ff;
+  box-shadow: 0 0 18px rgba(103, 178, 255, 0.25);
 }
 
 .steps span.done {
@@ -188,10 +209,12 @@ textarea {
 }
 
 .editor {
-  border-top: 1px solid #2d4f7e;
+  border-top: 1px solid #315588;
   padding-top: 12px;
   display: grid;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .editor label {
@@ -207,7 +230,7 @@ textarea {
 .verifyOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 14, 0.7);
+  background: rgba(2, 6, 14, 0.74);
   display: grid;
   place-items: center;
   z-index: 50;
@@ -265,6 +288,18 @@ textarea {
 .icon.error {
   background: rgba(198, 69, 69, 0.2);
   color: #ff8f8f;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.62;
+    transform: scale(1.03);
+  }
 }
 
 @keyframes spin {
