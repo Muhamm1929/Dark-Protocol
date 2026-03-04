@@ -27,7 +27,8 @@ const defaultConfig = {
 const configStorageKey = 'darkProtocolConfig';
 const participantsStorageKey = 'darkProtocolParticipants';
 const modeStorageKey = 'darkProtocolMode';
-const secretAdminCode = 'SecretAdmin';
+const adminSecretStorageKey = 'darkProtocolAdminSecret';
+const defaultSecretAdminCode = 'SecretAdmin';
 
 function normalize(value) {
   return value.trim().toUpperCase();
@@ -49,6 +50,9 @@ export default function Home() {
   const [adminGateOpen, setAdminGateOpen] = useState(false);
   const [adminCodeInput, setAdminCodeInput] = useState('');
   const [adminError, setAdminError] = useState('');
+  const [adminSecretCode, setAdminSecretCode] = useState(defaultSecretAdminCode);
+  const [adminSecretInput, setAdminSecretInput] = useState(defaultSecretAdminCode);
+  const [telegramSubmitted, setTelegramSubmitted] = useState(false);
 
   useEffect(() => {
     const rawConfig = localStorage.getItem(configStorageKey);
@@ -80,6 +84,12 @@ export default function Home() {
     const rawMode = localStorage.getItem(modeStorageKey);
     if (rawMode === 'waiting' || rawMode === 'completed' || rawMode === 'running') {
       setSystemMode(rawMode);
+    }
+
+    const rawAdminSecret = localStorage.getItem(adminSecretStorageKey);
+    if (rawAdminSecret) {
+      setAdminSecretCode(rawAdminSecret);
+      setAdminSecretInput(rawAdminSecret);
     }
   }, []);
 
@@ -148,6 +158,7 @@ export default function Home() {
     setAttemptsLeft(10);
     setAnswers({ level1: '', level2: '', level3: '' });
     setTelegramInput('');
+    setTelegramSubmitted(false);
     setStage('game');
   };
 
@@ -171,7 +182,7 @@ export default function Home() {
     const answerValue = answers[level].trim();
     const isLevel3 = level === 'level3';
 
-    if (level === 'level1' && answerValue === secretAdminCode) {
+    if (level === 'level1' && answerValue === adminSecretCode) {
       setStage('admin');
       return;
     }
@@ -219,8 +230,14 @@ export default function Home() {
           status: 'error',
           text: `Неверно. Осталось попыток: ${next}`
         });
+        window.setTimeout(() => {
+          setModal((prev) => (prev.status === 'error' ? { open: false, status: 'loading', text: '' } : prev));
+        }, 1800);
       } else {
         setModal({ open: true, status: 'error', text: 'Неверный ответ. Попробуй снова.' });
+        window.setTimeout(() => {
+          setModal((prev) => (prev.status === 'error' ? { open: false, status: 'loading', text: '' } : prev));
+        }, 1800);
       }
     }, 1000);
   };
@@ -235,6 +252,19 @@ export default function Home() {
     const tg = telegramInput.trim();
     markParticipant('approved', tg);
     setTelegramInput(tg);
+    setTelegramSubmitted(true);
+  };
+
+  const saveAdminSecret = () => {
+    const trimmed = adminSecretInput.trim();
+    if (!trimmed) return;
+    setAdminSecretCode(trimmed);
+    localStorage.setItem(adminSecretStorageKey, trimmed);
+  };
+
+  const clearParticipants = () => {
+    persistParticipants([]);
+    setCurrentParticipantIndex(-1);
   };
 
   const handleSaveConfig = () => {
@@ -265,7 +295,7 @@ export default function Home() {
   };
 
   const tryOpenAdmin = () => {
-    if (adminCodeInput.trim() === secretAdminCode) {
+    if (adminCodeInput.trim() === adminSecretCode) {
       setStage('admin');
       setAdminGateOpen(false);
       setAdminCodeInput('');
@@ -290,6 +320,7 @@ export default function Home() {
             />
             <button onClick={submitTelegram}>Отправить</button>
           </div>
+          {telegramSubmitted ? <p className="teamLine">Спасибо за Участие :)</p> : null}
           <p className="teamLine">By Muhammad Team</p>
           <FooterAdminButton onOpen={() => setAdminGateOpen(true)} />
         </section>
@@ -380,6 +411,19 @@ export default function Home() {
             <button onClick={() => changeMode('running')}>Возобновить испытание</button>
             <button onClick={() => changeMode('waiting')}>Ожидание</button>
             <button onClick={() => changeMode('completed')}>Закончить испытание</button>
+            <button onClick={clearParticipants}>Очистить таблицу участников</button>
+          </div>
+
+          <div className="participantPanel terminal">
+            <p>Секретный код админ-панели</p>
+            <div className="inputRow">
+              <input
+                value={adminSecretInput}
+                onChange={(event) => setAdminSecretInput(event.target.value)}
+                placeholder="Новый secret code"
+              />
+              <button onClick={saveAdminSecret}>Сохранить код</button>
+            </div>
           </div>
 
           <div className="participantPanel terminal">
