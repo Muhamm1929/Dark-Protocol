@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const defaultConfig = {
   level1: {
@@ -25,25 +25,21 @@ const defaultConfig = {
 };
 
 const storageKey = 'darkProtocolConfig';
+const secretAdminCode = 'SecretAdmin';
 
 function normalize(value) {
   return value.trim().toUpperCase();
 }
 
-function extractFragments(logText) {
-  return logText
-    .split('\n')
-    .map((line) => line.match(/key fragment\s*:\s*(.+)/i)?.[1]?.trim() ?? '')
-    .filter(Boolean)
-    .join('');
-}
-
 export default function Home() {
-  const [mode, setMode] = useState('game');
   const [config, setConfig] = useState(defaultConfig);
+  const [stage, setStage] = useState('init');
+  const [username, setUsername] = useState('');
+  const [inputName, setInputName] = useState('');
+  const [currentLevel, setCurrentLevel] = useState(1);
   const [answers, setAnswers] = useState({ level1: '', level2: '', level3: '' });
-  const [results, setResults] = useState({ level1: '', level2: '', level3: '' });
   const [attemptsLeft, setAttemptsLeft] = useState(defaultConfig.level3.attempts);
+  const [modal, setModal] = useState({ open: false, status: 'loading', text: '' });
 
   useEffect(() => {
     const raw = localStorage.getItem(storageKey);
@@ -65,43 +61,79 @@ export default function Home() {
     setAttemptsLeft(config.level3.attempts);
   }, [config.level3.attempts]);
 
-  const level2AutoAnswer = useMemo(() => extractFragments(config.level2.logText), [config.level2.logText]);
+  const startGame = () => {
+    const name = inputName.trim();
+    if (!name) return;
+    setUsername(name);
+    setStage('game');
+  };
 
   const handleCheck = (level) => {
-    if (level === 'level3') {
-      if (attemptsLeft <= 0) {
-        setResults((prev) => ({ ...prev, level3: 'Попытки закончились. Сбрось раунд или измени пароль в админ-панели.' }));
-        return;
-      }
-
-      const isCorrect = answers.level3.trim() === config.level3.password.trim();
-      if (isCorrect) {
-        setResults((prev) => ({ ...prev, level3: '✅ Доступ получен.' }));
-      } else {
-        const next = attemptsLeft - 1;
-        setAttemptsLeft(next);
-        setResults((prev) => ({
-          ...prev,
-          level3: next > 0 ? `❌ Неверно. Осталось попыток: ${next}` : '⛔ Попытки закончились.'
-        }));
-      }
+    if ((level === 'level1' && currentLevel !== 1) || (level === 'level2' && currentLevel !== 2) || (level === 'level3' && currentLevel !== 3)) {
       return;
     }
 
-    const expected = normalize(config[level].answer);
-    const userAnswer = normalize(answers[level]);
-    const passed = userAnswer === expected;
+    const answerValue = answers[level].trim();
 
-    setResults((prev) => ({
-      ...prev,
-      [level]: passed ? '✅ Верно' : '❌ Неверный ответ'
-    }));
+    if (level === 'level1' && answerValue === secretAdminCode) {
+      setStage('admin');
+      return;
+    }
+
+    const isLevel3 = level === 'level3';
+
+    if (isLevel3 && attemptsLeft <= 0) {
+      setModal({ open: true, status: 'error', text: 'Попытки закончились. Сбрось раунд или измени пароль в админ-панели.' });
+      return;
+    }
+
+    setModal({ open: true, status: 'loading', text: 'Проверка ответа...' });
+
+    window.setTimeout(() => {
+      let isCorrect = false;
+
+      if (isLevel3) {
+        isCorrect = answerValue === config.level3.password.trim();
+      } else {
+        isCorrect = normalize(answerValue) === normalize(config[level].answer);
+      }
+
+      if (isCorrect) {
+        const doneText = level === 'level3' ? 'Доступ получен. Все испытания завершены.' : 'Ответ принят. Переход на следующий уровень.';
+        setModal({ open: true, status: 'success', text: doneText });
+
+        window.setTimeout(() => {
+          setModal((prev) => ({ ...prev, open: false }));
+          if (level === 'level1') setCurrentLevel(2);
+          if (level === 'level2') setCurrentLevel(3);
+        }, 1200);
+        return;
+      }
+
+      if (isLevel3) {
+        const next = attemptsLeft - 1;
+        setAttemptsLeft(next);
+        setModal({
+          open: true,
+          status: 'error',
+          text: next > 0 ? `Неверно. Осталось попыток: ${next}` : 'Попытки закончились.'
+        });
+      } else {
+        setModal({ open: true, status: 'error', text: 'Неверный ответ. Попробуй снова.' });
+      }
+    }, 1200);
+  };
+
+  const resetFinalRound = () => {
+    setAttemptsLeft(config.level3.attempts);
+    setAnswers((prev) => ({ ...prev, level3: '' }));
+    setModal({ open: false, status: 'loading', text: '' });
   };
 
   const handleSaveConfig = () => {
     localStorage.setItem(storageKey, JSON.stringify(config));
     setAttemptsLeft(config.level3.attempts);
-    setResults({ level1: '', level2: '', level3: '' });
+    setStage('game');
   };
 
   const resetDefaults = () => {
@@ -110,67 +142,40 @@ export default function Home() {
     setAttemptsLeft(defaultConfig.level3.attempts);
   };
 
-  const resetFinalRound = () => {
-    setAttemptsLeft(config.level3.attempts);
-    setResults((prev) => ({ ...prev, level3: '' }));
-    setAnswers((prev) => ({ ...prev, level3: '' }));
-  };
+  if (stage === 'init') {
+    return (
+      <main className="page center">
+        <section className="card initCard">
+          <div className="terminal">
+            <pre>{`[ SYSTEM INITIALIZATION ]\n\nОбнаружен новый участник.\nВведите имя пользователя для доступа к испытанию.`}</pre>
+          </div>
+          <div className="inputRow">
+            <input
+              value={inputName}
+              onChange={(e) => setInputName(e.target.value)}
+              placeholder="Введите имя пользователя"
+            />
+            <button onClick={startGame}>Войти</button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="page">
       <header className="header">
         <h1>Dark Protocol</h1>
-        <div className="tabs">
-          <button className={mode === 'game' ? 'active' : ''} onClick={() => setMode('game')}>
-            Испытания
-          </button>
-          <button className={mode === 'admin' ? 'active' : ''} onClick={() => setMode('admin')}>
-            Админ-панель
-          </button>
-        </div>
+        <p className="user">Участник: {username}</p>
       </header>
 
-      {mode === 'game' ? (
-        <section className="levels">
-          <LevelCard
-            color="green"
-            title={`🟢 Уровень 1 — Лёгкий | ${config.level1.name}`}
-            description={config.level1.description}
-            terminalText={config.level1.encodedText}
-            answer={answers.level1}
-            onAnswerChange={(v) => setAnswers((p) => ({ ...p, level1: v }))}
-            onCheck={() => handleCheck('level1')}
-            result={results.level1}
-          />
-
-          <LevelCard
-            color="yellow"
-            title={`🟡 Уровень 2 — Средний | ${config.level2.name}`}
-            description={config.level2.description}
-            terminalText={config.level2.logText}
-            answer={answers.level2}
-            onAnswerChange={(v) => setAnswers((p) => ({ ...p, level2: v }))}
-            onCheck={() => handleCheck('level2')}
-            result={results.level2}
-            helper={`Собрано из key fragment: ${level2AutoAnswer}`}
-          />
-
-          <LevelCard
-            color="red"
-            title={`🔴 Уровень 3 — Сложный | ${config.level3.name}`}
-            description={`${config.level3.description}\n${config.level3.hint}`}
-            terminalText={`[FINAL ROUND]\nОсталось попыток: ${attemptsLeft}`}
-            answer={answers.level3}
-            onAnswerChange={(v) => setAnswers((p) => ({ ...p, level3: v }))}
-            onCheck={() => handleCheck('level3')}
-            result={results.level3}
-            actions={<button onClick={resetFinalRound}>Сбросить раунд</button>}
-          />
-        </section>
-      ) : (
+      {stage === 'admin' ? (
         <section className="admin card">
-          <h2>Админ-панель</h2>
-          <p>Меняй названия, шифры, пароли и количество попыток. Изменения сохраняются в браузере.</p>
+          <div className="adminHeader">
+            <h2>Админ-панель</h2>
+            <button onClick={() => setStage('game')}>Назад в испытания</button>
+          </div>
+          <p>Секретный вход активирован. Меняй названия, шифры, пароли и попытки.</p>
 
           <Editor title="Уровень 1" fields={[
             ['Название', config.level1.name, (v) => setConfig((p) => ({ ...p, level1: { ...p.level1, name: v } }))],
@@ -199,27 +204,98 @@ export default function Home() {
             <button onClick={resetDefaults}>Сбросить по умолчанию</button>
           </div>
         </section>
+      ) : (
+        <section className="levels">
+          <Progress currentLevel={currentLevel} />
+
+          <LevelCard
+            locked={currentLevel !== 1}
+            color="green"
+            title={`🟢 Уровень 1 — Лёгкий | ${config.level1.name}`}
+            description={`${config.level1.description}\n💡 Для админа: введи специальный код вместо ответа.`}
+            terminalText={config.level1.encodedText}
+            answer={answers.level1}
+            onAnswerChange={(v) => setAnswers((p) => ({ ...p, level1: v }))}
+            onCheck={() => handleCheck('level1')}
+          />
+
+          <LevelCard
+            locked={currentLevel < 2}
+            color="yellow"
+            title={`🟡 Уровень 2 — Средний | ${config.level2.name}`}
+            description={config.level2.description}
+            terminalText={config.level2.logText}
+            answer={answers.level2}
+            onAnswerChange={(v) => setAnswers((p) => ({ ...p, level2: v }))}
+            onCheck={() => handleCheck('level2')}
+          />
+
+          <LevelCard
+            locked={currentLevel < 3}
+            color="red"
+            title={`🔴 Уровень 3 — Сложный | ${config.level3.name}`}
+            description={`${config.level3.description}\n${config.level3.hint}`}
+            terminalText={`[FINAL ROUND]\nОсталось попыток: ${attemptsLeft}`}
+            answer={answers.level3}
+            onAnswerChange={(v) => setAnswers((p) => ({ ...p, level3: v }))}
+            onCheck={() => handleCheck('level3')}
+            actions={<button onClick={resetFinalRound}>Сбросить раунд</button>}
+          />
+        </section>
       )}
+
+      {modal.open ? <VerificationModal status={modal.status} text={modal.text} /> : null}
     </main>
   );
 }
 
-function LevelCard({ color, title, description, terminalText, answer, onAnswerChange, onCheck, result, helper, actions }) {
+function Progress({ currentLevel }) {
   return (
-    <article className={`card ${color}`}>
+    <div className="progress card">
+      <p>Прогресс доступа:</p>
+      <div className="steps">
+        {[1, 2, 3].map((step) => (
+          <span key={step} className={currentLevel > step ? 'done' : currentLevel === step ? 'active' : ''}>
+            Уровень {step}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LevelCard({ locked, color, title, description, terminalText, answer, onAnswerChange, onCheck, actions }) {
+  return (
+    <article className={`card ${color} ${locked ? 'locked' : ''}`}>
       <h3>{title}</h3>
       <div className="terminal">
         <p>{description}</p>
         <pre>{terminalText}</pre>
       </div>
       <div className="inputRow">
-        <input value={answer} onChange={(e) => onAnswerChange(e.target.value)} placeholder="Введи ответ" />
-        <button onClick={onCheck}>Проверить</button>
+        <input
+          disabled={locked}
+          value={answer}
+          onChange={(e) => onAnswerChange(e.target.value)}
+          placeholder={locked ? 'Сначала пройди предыдущий уровень' : 'Введи ответ'}
+        />
+        <button disabled={locked} onClick={onCheck}>Проверить</button>
       </div>
-      {helper ? <p className="helper">{helper}</p> : null}
-      {result ? <p className="result">{result}</p> : null}
       {actions ? <div className="actions">{actions}</div> : null}
     </article>
+  );
+}
+
+function VerificationModal({ status, text }) {
+  return (
+    <div className="verifyOverlay">
+      <div className={`verifyCard ${status}`}>
+        {status === 'loading' ? <div className="spinner" /> : null}
+        {status === 'success' ? <div className="icon success">✓</div> : null}
+        {status === 'error' ? <div className="icon error">✕</div> : null}
+        <p>{text}</p>
+      </div>
+    </div>
   );
 }
 
