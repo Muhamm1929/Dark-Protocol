@@ -63,6 +63,11 @@ button:active {
   transform: scale(0.98);
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .levels {
   display: grid;
   gap: 16px;
@@ -92,6 +97,8 @@ button:active {
 
 .initCard {
   width: min(760px, 100%);
+  display: grid;
+  gap: 10px;
 }
 
 .card.green {
@@ -170,6 +177,26 @@ textarea {
   gap: 16px;
 }
 
+.teamLine {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #9fc2f2;
+  text-align: center;
+}
+
+.adminTinyButton {
+  margin: 6px auto 0;
+  font-size: 12px;
+  padding: 6px 10px;
+  opacity: 0.8;
+}
+
+.errorText {
+  color: #ff9f9f;
+  margin: 0;
+}
+
 .participantPanel {
   position: relative;
   z-index: 1;
@@ -237,7 +264,7 @@ textarea {
 }
 
 .verifyCard {
-  width: min(360px, calc(100% - 40px));
+  width: min(420px, calc(100% - 40px));
   border-radius: 16px;
   border: 1px solid #3a5d8c;
   background: #091324;
