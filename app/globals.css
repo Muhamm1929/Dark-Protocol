@@ -1,0 +1,148 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: radial-gradient(circle at top, #11192d, #05070d 55%);
+  color: #e8f1ff;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  background: #172036;
+  border: 1px solid #2d4d7a;
+  color: #dff0ff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #65a3ff;
+}
+
+button.active {
+  background: #2557a0;
+}
+
+.levels {
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid #284775;
+  border-radius: 14px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+  background: rgba(8, 17, 31, 0.74);
+}
+
+.card.green { border-color: #1d7f56; }
+.card.yellow { border-color: #ac8731; }
+.card.red { border-color: #a34343; }
+
+h3 {
+  margin: 0 0 12px;
+}
+
+.terminal {
+  border-radius: 10px;
+  border: 1px solid #2d4f7e;
+  background: #02050c;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.terminal p {
+  margin: 0 0 10px;
+  color: #93b7eb;
+  white-space: pre-wrap;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #c8fdd8;
+}
+
+.inputRow {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+input,
+textarea {
+  width: 100%;
+  background: #0a1222;
+  border: 1px solid #2d4f7e;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.helper,
+.result {
+  margin: 10px 0 0;
+}
+
+.actions,
+.adminActions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin {
+  display: grid;
+  gap: 16px;
+}
+
+.editor {
+  border-top: 1px solid #2d4f7e;
+  padding-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.editor label {
+  display: grid;
+  gap: 6px;
+}
+
+.editor span {
+  font-size: 14px;
+  color: #9fb9dc;
+}
